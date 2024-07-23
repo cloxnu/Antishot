@@ -5,6 +5,7 @@
 //  Created by Sidney Liu on 7/21/24.
 //
 
+#if !TARGET_OS_WATCHOS
 #import <objc/runtime.h>
 #import <QuartzCore/QuartzCore.h>
 
@@ -39,3 +40,4 @@
 }
 
 @end
+#endif
