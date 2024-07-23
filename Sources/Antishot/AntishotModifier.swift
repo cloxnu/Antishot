@@ -91,7 +91,6 @@ final class AntishotAnchorUIView: UIView {
         if !isOverlay {
             AntishotViewStore.anchorBackgroundViews.setObject(self, forKey: id as NSUUID)
         }
-        self.isAntishotAnchorOverlayView = isOverlay
         self.antishotID = id
         self.makeAntishot()
     }
@@ -119,9 +118,8 @@ final class AntishotAnchorUIView: UIView {
               let ancestor = nearestCommonAncestor(with: pairedView) else { return [] }
         return ancestor.allSubviewsDFS()
             .lazy
-            .drop(while: { !(($0.isAntishotAnchorOverlayView ?? false) && $0.antishotID == self.id) })
-            .prefix(while: { ($0.isAntishotAnchorOverlayView ?? true) || $0.antishotID != self.id })
-            .dropFirst()
+            .drop(while: { $0 != self })
+            .prefix(while: { $0 == self || $0.antishotID != self.id })
     }
     
     func makeAntishot(views: [UIView]) {

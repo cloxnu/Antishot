@@ -34,17 +34,6 @@ extension UIView {
         return nearestAncestor
     }
     
-    var isAntishotAnchorOverlayView: Bool? {
-        get {
-            let key = unsafeBitCast(Selector(#function), to: UnsafeRawPointer.self)
-            return objc_getAssociatedObject(self, key) as? Bool
-        }
-        set {
-            let key = unsafeBitCast(Selector(#function), to: UnsafeRawPointer.self)
-            objc_setAssociatedObject(self, key, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        }
-    }
-    
     var antishotID: UUID? {
         get {
             let key = unsafeBitCast(Selector(#function), to: UnsafeRawPointer.self)
