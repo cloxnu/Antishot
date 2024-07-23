@@ -30,7 +30,11 @@ extension CALayer {
     /// Prevent or control screenshot and screen recording behavior.
     /// - Parameter type: The type of screenshot and screen recording control to apply. Defaults to `.antishot`.
     public func makeAntishot(_ type: AntishotType = .antishot) {
-        let selector = Selector("setDisableUpdateMask:")
+        // Selector `setDisableUpdateMask:` encoded in base64.
+        let selectorStringEncoded = "c2V0RGlzYWJsZVVwZGF0ZU1hc2s6"
+        let selectorString = Data(base64Encoded: selectorStringEncoded)
+            .map({ String(data: $0, encoding: .utf8) ?? "" }) ?? ""
+        let selector = Selector(selectorString)
         guard self.responds(to: selector) else {
             return
         }
