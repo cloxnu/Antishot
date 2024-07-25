@@ -46,24 +46,23 @@ extension AntishotModifier where Hint == EmptyView {
 
 #if canImport(UIKit)
 
-fileprivate struct AntishotAnchorView: UIViewRepresentable {
+fileprivate struct AntishotAnchorView: UIViewControllerRepresentable {
     let id: UUID
     let isOverlay: Bool
     var type: AntishotType = .antishot
-    func makeUIView(context: Context) -> AntishotAnchorUIView {
-        let view = AntishotAnchorUIView(id: id, type: type, isOverlay: isOverlay)
-        return view
+    func makeUIViewController(context: Context) -> AntishotAnchorUIViewController {
+        return AntishotAnchorUIViewController(id: id, type: type, isOverlay: isOverlay)
     }
-    func updateUIView(_ uiView: AntishotAnchorUIView, context: Context) {
-        uiView.type = type
+    func updateUIViewController(_ uiViewController: AntishotAnchorUIViewController, context: Context) {
+        uiViewController.type = type
     }
 }
 
 fileprivate enum AntishotViewStore {
-    static var anchorBackgroundViews: NSMapTable<NSUUID, AntishotAnchorUIView> = .strongToWeakObjects()
+    static var anchorBackgroundViews: NSMapTable<NSUUID, UIView> = .strongToWeakObjects()
 }
 
-final class AntishotAnchorUIView: UIView {
+final class AntishotAnchorUIViewController: UIViewController {
     let id: UUID
     let isOverlay: Bool
     var type: AntishotType = .antishot {
@@ -77,8 +76,7 @@ final class AntishotAnchorUIView: UIView {
         self.id = id
         self.type = type
         self.isOverlay = isOverlay
-        super.init(frame: .zero)
-        self.backgroundColor = .clear
+        super.init(nibName: nil, bundle: nil)
     }
     
     @available(*, unavailable)
@@ -86,21 +84,27 @@ final class AntishotAnchorUIView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func didMoveToSuperview() {
-        super.didMoveToSuperview()
+    override func viewDidLoad() {
+        view.backgroundColor = .clear
+    }
+    
+    override func didMove(toParent parent: UIViewController?) {
+        super.didMove(toParent: parent)
         if !isOverlay {
-            AntishotViewStore.anchorBackgroundViews.setObject(self, forKey: id as NSUUID)
+            AntishotViewStore.anchorBackgroundViews.setObject(view, forKey: id as NSUUID)
         }
-        self.antishotID = id
-        self.makeAntishot()
+        view.antishotID = id
+        makeAntishot()
     }
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        self.makeAntishot()
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        makeAntishot()
     }
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        self.makeAntishot()
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        makeAntishot()
     }
     
     func makeAntishot() {
@@ -115,11 +119,11 @@ final class AntishotAnchorUIView: UIView {
     
     func findTargetViews() -> any Sequence<UIView> {
         guard let pairedView = AntishotViewStore.anchorBackgroundViews.object(forKey: id as NSUUID),
-              let ancestor = nearestCommonAncestor(with: pairedView) else { return [] }
+              let ancestor = view.nearestCommonAncestor(with: pairedView) else { return [] }
         return ancestor.allSubviewsDFS()
             .lazy
-            .drop(while: { $0 != self })
-            .prefix(while: { $0 == self || $0.antishotID != self.id })
+            .drop(while: { $0 != self.view })
+            .prefix(while: { $0 == self.view || $0.antishotID != self.id })
     }
     
     func makeAntishot(views: [UIView]) {
