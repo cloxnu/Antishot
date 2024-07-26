@@ -86,14 +86,11 @@ final class AntishotAnchorUIViewController: UIViewController {
     
     override func viewDidLoad() {
         view.backgroundColor = .clear
+        view.antishotID = id
     }
     
     override func didMove(toParent parent: UIViewController?) {
         super.didMove(toParent: parent)
-        if !isOverlay {
-            AntishotViewStore.anchorBackgroundViews.setObject(view, forKey: id as NSUUID)
-        }
-        view.antishotID = id
         makeAntishot()
     }
     
@@ -102,19 +99,15 @@ final class AntishotAnchorUIViewController: UIViewController {
         makeAntishot()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        makeAntishot()
-    }
-    
     func makeAntishot() {
-        guard isOverlay else {
-            return
+        if !isOverlay {
+            AntishotViewStore.anchorBackgroundViews.setObject(view, forKey: id as NSUUID)
+        } else {
+            if cachedTargetViews.setRepresentation.isEmpty {
+                findTargetViews().forEach { cachedTargetViews.add($0) }
+            }
+            cachedTargetViews.allObjects.forEach({ $0.layer.makeAntishot(type) })
         }
-        if cachedTargetViews.count == 0 {
-            findTargetViews().forEach { cachedTargetViews.add($0) }
-        }
-        makeAntishot(views: cachedTargetViews.allObjects)
     }
     
     func findTargetViews() -> any Sequence<UIView> {
@@ -124,12 +117,7 @@ final class AntishotAnchorUIViewController: UIViewController {
             .lazy
             .drop(while: { $0 != self.view })
             .prefix(while: { $0 == self.view || $0.antishotID != self.id })
-    }
-    
-    func makeAntishot(views: [UIView]) {
-        views.forEach { view in
-            view.layer.makeAntishot(type)
-        }
+            .filter({ !self.view.isDescendant(of: $0) && !pairedView.isDescendant(of: $0) })
     }
 }
 
